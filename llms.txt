@@ -1,0 +1,139 @@
+# PhysioRehab (prototype)
+
+**An ICF-native clinical-reasoning layer that re-centres physiological
+measurement around how rehabilitation actually reasons.**
+
+Rehabilitation is different from disease medicine: it targets
+*disability* and *life-reconstruction*, evaluates the *individual* (not
+a randomised group), fuses *qualitative* judgement with quantitative
+signals, and is delivered by allied-health staff (PT/OT/ST) whose
+coding/statistics background is diverse. A tool that wants to penetrate
+rehab has to speak that language. This prototype is a runnable,
+end-to-end vertical slice that does.
+
+> Status: **concept demonstrator**, not a released package. The engine
+> it sits on already exists in the ecosystem; the novelty here is the
+> rehab-facing semantic / qualitative / reasoning / documentation layer.
+
+## The one-path workflow
+
+    個別患者を目標参照で経時測定
+      → SCED で変化を defensible に検出（NAP + MCID + 2SD帯）
+      → ICF + 軌跡で可視化
+      → ICF 構造の経過記録を自動下書き
+
+Run it:
+
+``` r
+# from the package root
+Rscript inst/examples/run_demo.R
+```
+
+It simulates a chronic stroke, left-hemiplegia single case (AB design,
+12 sessions), runs the guided workflow, and emits two clinician-facing
+artefacts: `progress_note.md` (auto-drafted, ICF-structured) and
+`trajectory.png` (a SCED single-case plot). Sample output is in
+`inst/examples/out/`.
+
+## Design: the three pillars (and what is deliberately honest)
+
+| Pillar | What it is | Where in the code |
+|----|----|----|
+| **A. ICF-native semantics** | The shared language of rehab (WHO ICF): every measure, goal and observation is anchored to ICF codes + 0–4 qualifiers. The domain data model. | `R/icf.R`, `R/goals.R` (GAS) |
+| **B. Quant × qual fusion + reasoning scaffold** | Single-case change detection (`R/sced.R`) fuses gait speed with ICF qualifiers; a hypothesis→evidence check (`R/reasoning.R`) keeps the clinician in the loop and **honestly flags what is not supported** (in the demo, spasticity b735 does not improve → “partial”). | `R/sced.R`, `R/reasoning.R` |
+| **C. Low floor / high ceiling** | One guided call ([`rehab_workflow()`](https://x-biosignal.github.io/PhysioRehab/reference/rehab_workflow.md)) is what a GUI button runs; experts call the pieces directly. Every run leaves a readable record, so the GUI doubles as an R on-ramp — the Rcmdr/jamovi adoption mechanism. | `R/workflow.R` |
+
+The clinician-facing payoff (`R/report.R`) is the **adoption hook**: it
+drafts the progress note the therapist already has to write, so
+measurement and analysis ride along for free.
+
+## Sits on the existing ecosystem (does not reinvent)
+
+- **SCED** → `PhysioClinStats` (`scedNAP`/`scedTau`/`scedTauU` already
+  shipped; the local `nap()` here is a self-contained prototype
+  stand-in).
+- **Ontologies / ICF catalogue** → `PhysioAnnotationHub`.
+- **Individual trajectories** →
+  [`PhysioCore::PhysioLongitudinal`](https://x-biosignal.github.io/PhysioCore//reference/PhysioLongitudinal.html).
+- **Quantitative measures** (gait speed, symmetry, EMG, synergies) →
+  `PhysioMoCap`, `PhysioEMG`, gait pipelines.
+- **Report rendering** → `PhysioReport`.
+- **Consent / governance / role scope** → `PhysioCompliance`.
+
+## Not yet (deliberate scope)
+
+- A clinician GUI (Pillar C proper) — this prototype is the R core a GUI
+  drives.
+- Rasch/IRT ordinal→interval measurement.
+- Real-signal ingestion wired to the ecosystem packages (here:
+  synthetic).
+- Regulatory framing (kept to *measurement + documentation + reasoning
+  support*, clinician-in-the-loop; not diagnostic autonomy).
+
+# Package index
+
+## ICF semantics & goals
+
+- [`icf_catalog()`](https://x-biosignal.github.io/PhysioRehab/reference/icf_catalog.md)
+  : ICF catalogue (stroke gait core-set subset)
+- [`icf_qualifier_label()`](https://x-biosignal.github.io/PhysioRehab/reference/icf_qualifier_label.md)
+  : Label an ICF qualifier (0-4 severity)
+- [`icf_change()`](https://x-biosignal.github.io/PhysioRehab/reference/icf_change.md)
+  : ICF qualifier change across an episode (improvement = qualifier
+  decreases)
+- [`icf_for_measure()`](https://x-biosignal.github.io/PhysioRehab/reference/icf_for_measure.md)
+  : Map a measure to ICF codes via the real ontology
+  (PhysioAnnotationHub)
+- [`rehab_goal()`](https://x-biosignal.github.io/PhysioRehab/reference/rehab_goal.md)
+  : Define a rehabilitation goal (ICF-linked, GAS-scaled)
+
+## Single-case episode & analysis
+
+- [`new_rehab_episode()`](https://x-biosignal.github.io/PhysioRehab/reference/new_rehab_episode.md)
+  : Create an empty rehabilitation episode (single-case)
+- [`add_session()`](https://x-biosignal.github.io/PhysioRehab/reference/add_session.md)
+  : Record one therapy session
+- [`sced_analyze()`](https://x-biosignal.github.io/PhysioRehab/reference/sced_analyze.md)
+  : Analyse an episode's primary measure with SCED + MCID (via
+  PhysioAppKit)
+
+## Reasoning, report & plot
+
+- [`rehab_hypothesis()`](https://x-biosignal.github.io/PhysioRehab/reference/rehab_hypothesis.md)
+  : State a clinical hypothesis about expected change
+- [`evaluate_hypothesis()`](https://x-biosignal.github.io/PhysioRehab/reference/evaluate_hypothesis.md)
+  : Evaluate a hypothesis against the episode's evidence
+- [`draft_progress_note()`](https://x-biosignal.github.io/PhysioRehab/reference/draft_progress_note.md)
+  : Draft an ICF-structured progress note from an analysed episode
+- [`plot_trajectory()`](https://x-biosignal.github.io/PhysioRehab/reference/plot_trajectory.md)
+  : Plot a single-case trajectory with phase line, 2-SD band and MCID
+  target
+
+## Guided workflow & GUI
+
+- [`rehab_workflow()`](https://x-biosignal.github.io/PhysioRehab/reference/rehab_workflow.md)
+  : Run the full single-case rehab workflow (guided, one call)
+- [`rehab_app()`](https://x-biosignal.github.io/PhysioRehab/reference/rehab_app.md)
+  : Build the PhysioRehab clinician prototype GUI
+- [`launch_rehab_app()`](https://x-biosignal.github.io/PhysioRehab/reference/launch_rehab_app.md)
+  : Launch the PhysioRehab GUI in a browser
+
+## Real-signal adapters
+
+- [`mocap_gait_measures()`](https://x-biosignal.github.io/PhysioRehab/reference/mocap_gait_measures.md)
+  : Real gait/kinematic measures from an OpenPose recording (via
+  PhysioMoCap)
+- [`add_session_from_mocap()`](https://x-biosignal.github.io/PhysioRehab/reference/add_session_from_mocap.md)
+  : Append a rehab session whose measures come from a real OpenPose
+  recording
+- [`emg_fatigue_measures()`](https://x-biosignal.github.io/PhysioRehab/reference/emg_fatigue_measures.md)
+  : Real muscle-fatigue / amplitude measures from an EMG recording (via
+  PhysioEMG)
+- [`add_session_from_emg()`](https://x-biosignal.github.io/PhysioRehab/reference/add_session_from_emg.md)
+  : Append a rehab session whose measures come from a real EMG recording
+
+## Example data
+
+- [`simulate_stroke_gait_case()`](https://x-biosignal.github.io/PhysioRehab/reference/simulate_stroke_gait_case.md)
+  : Simulate a stroke hemiplegic-gait single-case episode
+
