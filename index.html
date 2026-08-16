@@ -47,27 +47,40 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="physiorehab-prototype">PhysioRehab (prototype)<a class="anchor" aria-label="anchor" href="#physiorehab-prototype"></a>
+<div class="page-header"><h1 id="physiorehab">PhysioRehab<a class="anchor" aria-label="anchor" href="#physiorehab"></a>
 </h1></div>
-<p><strong>An ICF-native clinical-reasoning layer that re-centres physiological measurement around how rehabilitation actually reasons.</strong></p>
-<p>Rehabilitation is different from disease medicine: it targets <em>disability</em> and <em>life-reconstruction</em>, evaluates the <em>individual</em> (not a randomised group), fuses <em>qualitative</em> judgement with quantitative signals, and is delivered by allied-health staff (PT/OT/ST) whose coding/statistics background is diverse. A tool that wants to penetrate rehab has to speak that language. This prototype is a runnable, end-to-end vertical slice that does.</p>
-<blockquote>
-<p>Status: <strong>concept demonstrator</strong>, not a released package. The engine it sits on already exists in the ecosystem; the novelty here is the rehab-facing semantic / qualitative / reasoning / documentation layer.</p>
-</blockquote>
+<p><strong>ICF-native, single-case clinical-reasoning tools for rehabilitation.</strong></p>
+<p>Rehabilitation reasons differently from disease medicine: it targets disability and life reconstruction, evaluates the individual rather than a randomised group, combines qualitative judgement with quantitative signals, and is delivered by allied-health professionals (PT / OT / ST) with varied statistical backgrounds. PhysioRehab re-centres physiological measurement around that way of reasoning: it anchors measures and goals to the International Classification of Functioning (ICF), detects change with single-case methods, keeps the clinician in the loop, and drafts an ICF-structured progress note.</p>
 <div class="section level2">
-<h2 id="the-one-path-workflow">The one-path workflow<a class="anchor" aria-label="anchor" href="#the-one-path-workflow"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<pre><code>個別患者を目標参照で経時測定
-  → SCED で変化を defensible に検出（NAP + MCID + 2SD帯）
-  → ICF + 軌跡で可視化
-  → ICF 構造の経過記録を自動下書き</code></pre>
-<p>Run it:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># from the package root</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>Rscript inst<span class="sc">/</span>examples<span class="sc">/</span>run_demo.R</span></code></pre></div>
-<p>It simulates a chronic stroke, left-hemiplegia single case (AB design, 12 sessions), runs the guided workflow, and emits two clinician-facing artefacts: <code>progress_note.md</code> (auto-drafted, ICF-structured) and <code>trajectory.png</code> (a SCED single-case plot). Sample output is in <code>inst/examples/out/</code>.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"PhysioRehab"</span>, repos <span class="op">=</span> <span class="st">"https://x-biosignal.r-universe.dev"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="design-the-three-pillars-and-what-is-deliberately-honest">Design: the three pillars (and what is deliberately honest)<a class="anchor" aria-label="anchor" href="#design-the-three-pillars-and-what-is-deliberately-honest"></a>
+<h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
+</h2>
+<p>The core is a single guided workflow:</p>
+<pre><code>measure the individual over time against personal goals
+  -&gt; detect change defensibly with single-case methods (NAP + MCID + 2-SD band)
+  -&gt; visualise against ICF and the trajectory
+  -&gt; auto-draft an ICF-structured progress note</code></pre>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/x-biosignal/PhysioRehab" class="external-link">PhysioRehab</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ep</span>  <span class="op">&lt;-</span> <span class="fu"><a href="reference/simulate_stroke_gait_case.html">simulate_stroke_gait_case</a></span><span class="op">(</span><span class="op">)</span>          <span class="co"># a synthetic single case</span></span>
+<span><span class="va">hyp</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rehab_hypothesis.html">rehab_hypothesis</a></span><span class="op">(</span><span class="st">"task-oriented training improves gait"</span>,</span>
+<span>                        expect_speed_mcid <span class="op">=</span> <span class="cn">TRUE</span>, expect_icf <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>d450 <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rehab_workflow.html">rehab_workflow</a></span><span class="op">(</span><span class="va">ep</span>, <span class="va">hyp</span><span class="op">)</span>              <span class="co"># analyse -&gt; reason -&gt; plot -&gt; draft</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">report</span><span class="op">)</span>                             <span class="co"># the ICF-structured progress note</span></span>
+<span><span class="va">res</span><span class="op">$</span><span class="va">plot_file</span>                               <span class="co"># the single-case trajectory plot</span></span></code></pre></div>
+<p>A runnable end-to-end example is included:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>Rscript inst<span class="sc">/</span>examples<span class="sc">/</span>run_demo.R</span></code></pre></div>
+<p>It simulates a chronic-stroke, left-hemiplegia single case (AB design, 12 sessions), runs the workflow, and writes two clinician-facing artefacts — an auto-drafted, ICF-structured progress note and a single-case trajectory plot.</p>
+</div>
+<div class="section level2">
+<h2 id="design">Design<a class="anchor" aria-label="anchor" href="#design"></a>
 </h2>
 <table class="table">
 <colgroup>
@@ -76,60 +89,65 @@
 <col width="33%">
 </colgroup>
 <thead><tr>
-<th>Pillar</th>
-<th>What it is</th>
-<th>Where in the code</th>
+<th>Component</th>
+<th>Description</th>
+<th>Code</th>
 </tr></thead>
 <tbody>
 <tr>
-<td><strong>A. ICF-native semantics</strong></td>
-<td>The shared language of rehab (WHO ICF): every measure, goal and observation is anchored to ICF codes + 0–4 qualifiers. The domain data model.</td>
+<td><strong>ICF-native semantics</strong></td>
+<td>Measures, goals and observations are anchored to WHO ICF codes with 0–4 qualifiers — the domain data model of rehabilitation.</td>
 <td>
-<code>R/icf.R</code>, <code>R/goals.R</code> (GAS)</td>
+<code>R/icf.R</code>, <code>R/goals.R</code>
+</td>
 </tr>
 <tr>
-<td><strong>B. Quant × qual fusion + reasoning scaffold</strong></td>
-<td>Single-case change detection (<code>R/sced.R</code>) fuses gait speed with ICF qualifiers; a hypothesis→evidence check (<code>R/reasoning.R</code>) keeps the clinician in the loop and <strong>honestly flags what is not supported</strong> (in the demo, spasticity b735 does not improve → “partial”).</td>
+<td><strong>Quantitative–qualitative fusion with an honest reasoning scaffold</strong></td>
+<td>Single-case change detection fuses signals with ICF qualifiers; a hypothesis-to-evidence check keeps the clinician in the loop and explicitly reports what the evidence does <em>not</em> support.</td>
 <td>
 <code>R/sced.R</code>, <code>R/reasoning.R</code>
 </td>
 </tr>
 <tr>
-<td><strong>C. Low floor / high ceiling</strong></td>
-<td>One guided call (<code><a href="reference/rehab_workflow.html">rehab_workflow()</a></code>) is what a GUI button runs; experts call the pieces directly. Every run leaves a readable record, so the GUI doubles as an R on-ramp — the Rcmdr/jamovi adoption mechanism.</td>
-<td><code>R/workflow.R</code></td>
+<td><strong>Guided workflow and clinician GUI</strong></td>
+<td>One call, <code><a href="reference/rehab_workflow.html">rehab_workflow()</a></code>, runs the whole path; a Shiny interface, <code><a href="reference/rehab_app.html">rehab_app()</a></code>, exposes it to non-programmers, while experts call the components directly.</td>
+<td>
+<code>R/workflow.R</code>, <code>R/app.R</code>
+</td>
 </tr>
 </tbody>
 </table>
-<p>The clinician-facing payoff (<code>R/report.R</code>) is the <strong>adoption hook</strong>: it drafts the progress note the therapist already has to write, so measurement and analysis ride along for free.</p>
+<p>The clinician-facing output (<code>R/report.R</code>) drafts the progress note the therapist already has to write, so measurement and analysis accompany routine documentation.</p>
 </div>
 <div class="section level2">
-<h2 id="sits-on-the-existing-ecosystem-does-not-reinvent">Sits on the existing ecosystem (does not reinvent)<a class="anchor" aria-label="anchor" href="#sits-on-the-existing-ecosystem-does-not-reinvent"></a>
+<h2 id="ecosystem-integration">Ecosystem integration<a class="anchor" aria-label="anchor" href="#ecosystem-integration"></a>
 </h2>
+<p>PhysioRehab builds on the x-biosignal ecosystem rather than reimplementing it:</p>
 <ul>
 <li>
-<strong>SCED</strong> → <code>PhysioClinStats</code> (<code>scedNAP</code>/<code>scedTau</code>/<code>scedTauU</code> already shipped; the local <code>nap()</code> here is a self-contained prototype stand-in).</li>
+<strong>Single-case statistics</strong> — <code>PhysioAppKit</code> (NAP effect size, threshold-and-band analysis; reconciled with <code><a href="https://x-biosignal.github.io/PhysioClinStats/reference/scedNAP.html" class="external-link">PhysioClinStats::scedNAP</a></code>).</li>
 <li>
-<strong>Ontologies / ICF catalogue</strong> → <code>PhysioAnnotationHub</code>.</li>
+<strong>ICF ontology</strong> — <code>PhysioAnnotationHub</code> (<code><a href="reference/icf_for_measure.html">icf_for_measure()</a></code> resolves a measure to ICF codes from the maintained ontology).</li>
 <li>
-<strong>Individual trajectories</strong> → <code><a href="https://x-biosignal.github.io/PhysioCore//reference/PhysioLongitudinal.html" class="external-link">PhysioCore::PhysioLongitudinal</a></code>.</li>
+<strong>Real signals</strong> — <code>PhysioMoCap</code> (markerless gait via <code><a href="reference/add_session_from_mocap.html">add_session_from_mocap()</a></code>) and <code>PhysioEMG</code> (muscle fatigue via <code><a href="reference/add_session_from_emg.html">add_session_from_emg()</a></code>).</li>
 <li>
-<strong>Quantitative measures</strong> (gait speed, symmetry, EMG, synergies) → <code>PhysioMoCap</code>, <code>PhysioEMG</code>, gait pipelines.</li>
+<strong>Ordinal-to-interval measurement</strong> — Rasch calibration via <code>PhysioAppKit</code>.</li>
 <li>
-<strong>Report rendering</strong> → <code>PhysioReport</code>.</li>
-<li>
-<strong>Consent / governance / role scope</strong> → <code>PhysioCompliance</code>.</li>
+<strong>Reporting</strong> — <code>PhysioReport</code>.</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="not-yet-deliberate-scope">Not yet (deliberate scope)<a class="anchor" aria-label="anchor" href="#not-yet-deliberate-scope"></a>
+<h2 id="scope-and-limitations">Scope and limitations<a class="anchor" aria-label="anchor" href="#scope-and-limitations"></a>
 </h2>
 <ul>
-<li>A clinician GUI (Pillar C proper) — this prototype is the R core a GUI drives.</li>
-<li>Rasch/IRT ordinal→interval measurement.</li>
-<li>Real-signal ingestion wired to the ecosystem packages (here: synthetic).</li>
-<li>Regulatory framing (kept to <em>measurement + documentation + reasoning support</em>, clinician-in-the-loop; not diagnostic autonomy).</li>
+<li>Early-stage (0.1.0). The bundled examples use synthetic data; the worked instance is stroke hemiplegic gait, and the framework is condition-agnostic.</li>
+<li>PhysioRehab is a <strong>research tool for measurement, documentation, and clinician-in-the-loop reasoning support. It is not a medical device and is not intended for diagnosis</strong>; final clinical judgement rests with the clinician.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+</h2>
+<p>See <code>CITATION.cff</code>. Licensed under the MIT License.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
