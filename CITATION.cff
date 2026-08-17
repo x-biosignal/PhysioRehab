@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "PhysioRehab: ICF-Native Single-Case Clinical-Reasoning Tools for Rehabilitation"
+type: software
+authors:
+  - family-names: Matsui
+    given-names: Yusuke
+    email: mail.to.matsui@gmail.com
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/x-biosignal/PhysioRehab"
+url: "https://x-biosignal.github.io/PhysioRehab"

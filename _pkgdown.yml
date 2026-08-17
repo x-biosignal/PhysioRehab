@@ -1,0 +1,22 @@
+url: https://x-biosignal.github.io/PhysioRehab/
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#2c3e50"
+navbar:
+  structure:
+    left: [reference, news]
+    right: [search, github]
+reference:
+- title: ICF semantics & goals
+  contents: [icf_catalog, icf_qualifier_label, icf_change, icf_for_measure, rehab_goal]
+- title: Single-case episode & analysis
+  contents: [new_rehab_episode, add_session, sced_analyze]
+- title: Reasoning, report & plot
+  contents: [rehab_hypothesis, evaluate_hypothesis, draft_progress_note, plot_trajectory]
+- title: Guided workflow & GUI
+  contents: [rehab_workflow, rehab_app, launch_rehab_app]
+- title: Real-signal adapters
+  contents: [mocap_gait_measures, add_session_from_mocap, emg_fatigue_measures, add_session_from_emg]
+- title: Example data
+  contents: [simulate_stroke_gait_case]
