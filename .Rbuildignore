@@ -1,0 +1,7 @@
+^.*\.tar\.gz$
+^.*\.Rcheck$
+^inst/examples/out$
+^\.githooks$
+^_pkgdown\.yml$
+^CITATION\.cff$
+^\.github$

@@ -1,0 +1,144 @@
+---
+title: "Single-case rehabilitation reasoning with PhysioRehab"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Single-case rehabilitation reasoning with PhysioRehab}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+PhysioRehab re-centres physiological measurement around the way rehabilitation
+reasons about the *individual*: it anchors measures and goals to the WHO
+International Classification of Functioning (ICF), detects change with single-case
+methods, keeps the clinician in the loop, and auto-drafts an ICF-structured
+progress note.
+
+This vignette walks the whole path on a **synthetic** case. The numbers below are
+illustrative and are **not clinical advice**: PhysioRehab is a research tool for
+measurement, documentation and clinician-in-the-loop reasoning support, not a
+medical device, and final judgement always rests with the clinician.
+
+```{r setup}
+library(PhysioRehab)
+```
+
+## 1. A synthetic single case
+
+`simulate_stroke_gait_case()` builds one patient's episode: an AB single-case
+design with three baseline sessions and nine intervention sessions, recording
+comfortable gait speed alongside ICF qualifiers and a Goal Attainment Scaling
+(GAS) rating.
+
+```{r episode}
+ep <- simulate_stroke_gait_case()
+ep
+```
+
+An episode is a container of repeated measures; you can also build one by hand
+with `new_rehab_episode()` and `add_session()`, attaching a personal goal with
+`rehab_goal()`.
+
+## 2. Detect change defensibly
+
+Rehabilitation compares a person to their own baseline, so change is detected
+with distribution-free single-case statistics plus a minimal clinically
+important difference (MCID). `sced_analyze()` returns the non-overlap of all
+pairs (NAP), Tau, the baseline-vs-latest change, and whether it clears the MCID.
+
+```{r sced}
+sced <- sced_analyze(ep, measure = "gait_speed", mcid = 0.16)
+sced[c("baseline_mean", "latest", "delta", "nap", "exceeds_mcid")]
+```
+
+The ICF qualifiers (0 = no problem ... 4 = complete problem; lower is better) are
+tracked per code. Improvement means the qualifier *falls*:
+
+```{r icf}
+icf_change(ep, "d450")   # walking
+icf_change(ep, "b735")   # muscle tone / spasticity
+```
+
+## 3. Keep the clinician in the loop
+
+The clinician states an expectation; `evaluate_hypothesis()` reports, item by
+item, whether the evidence supports it -- and honestly flags what it does not.
+
+```{r reasoning}
+hyp <- rehab_hypothesis(
+  "task-oriented training improves gait",
+  expect_speed_mcid = TRUE,
+  expect_icf = c(d450 = 1, b735 = 1)
+)
+reasoning <- evaluate_hypothesis(ep, hyp, sced)
+reasoning$overall
+for (it in reasoning$items) {
+  mark <- if (is.na(it$supported)) "-" else if (it$supported) "OK" else "NO"
+  cat(sprintf("[%s] %s\n", mark, it$claim))
+}
+```
+
+## 4. Visualise the trajectory
+
+```{r plot, fig.width = 7, fig.height = 4.2}
+plot_trajectory(ep, mcid = 0.16, ylab = "comfortable gait speed (m/s)")
+```
+
+## 5. Draft the progress note
+
+The adoption hook is workflow: the tool drafts the ICF-structured progress note
+the therapist already has to write, so the measurement and analysis ride along.
+
+```{r note}
+note <- draft_progress_note(ep, sced, reasoning)
+cat(substr(note, 1, 400))
+```
+
+`rehab_workflow()` runs all of the above in one call (single-case analysis,
+hypothesis evaluation, trajectory plot and drafted note), writing the artefacts
+into `out_dir`:
+
+```{r workflow}
+res <- rehab_workflow(ep, hyp, out_dir = tempdir())
+names(res)
+```
+
+## 6. Capacity vs performance (cross-modal ICF constructs)
+
+Rehabilitation lives in the gap between what a person *can* do in the clinic
+(capacity) and what they actually *do* at home (performance). An `icf_construct`
+unifies heterogeneous measures on one ICF code by mapping each to the 0--4
+qualifier via ascending cut-points.
+
+```{r construct}
+cc <- new_icf_construct("d450")
+cc <- add_icf_measure(cc, "barthel_walk", value = 10,
+                      qualifier_type = "capacity", modality = "scale",
+                      cutpoints = c(2, 5, 8, 12))
+cc <- add_icf_measure(cc, "steps_per_day", value = 1800,
+                      qualifier_type = "performance", modality = "sensor",
+                      cutpoints = c(1000, 3000, 6000, 9000))
+capacity_performance_gap(cc)
+```
+
+## 7. What the ecosystem can measure
+
+`adl_coverage_summary()` reports, for each activity of daily living, how many
+modalities can measure it and whether both the capacity and performance
+qualifiers are covered.
+
+```{r coverage}
+head(adl_coverage_summary())
+```
+
+## Where to go next
+
+- Single-case statistics come from **PhysioAppKit** (the engine behind
+  `sced_analyze()`).
+- The ICF ontology is served by **PhysioAnnotationHub** (`icf_for_measure()`).
+- Real signals feed the episode through **PhysioMoCap**
+  (`add_session_from_mocap()`) and **PhysioEMG** (`add_session_from_emg()`).
+- `?PhysioRehab` lists every entry point grouped by task.
